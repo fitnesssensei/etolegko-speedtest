@@ -102,6 +102,10 @@ def measure(
         try:
             attempts.append(download_once(url, timeout=timeout))
         except (urllib.error.URLError, OSError, ValueError) as exc:
+            # HTTPError — это ещё и файловый объект с телом ответа: закрываем его,
+            # иначе сокет/буфер остаётся открытым до сборки мусора.
+            if isinstance(exc, urllib.error.HTTPError):
+                exc.close()
             # Сетевые сбои и кривой URL копим как текст ошибки, чтобы показать пользователю.
             errors.append(f"попытка {index}: {exc}")
     return attempts, errors
